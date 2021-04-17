@@ -1,9 +1,10 @@
-'use strict'
+import path from 'path'
+import { fileURLToPath } from 'url'
+import AutoLoad from 'fastify-autoload'
 
-const path = require('path')
-const AutoLoad = require('fastify-autoload')
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-module.exports = async function (fastify, opts) {
+export default async function (fastify, opts) {
   // Place here your custom code!
 
   // Do not touch the following lines
