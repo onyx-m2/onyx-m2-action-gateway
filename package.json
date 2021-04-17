@@ -1,5 +1,5 @@
 {
-  "name": "action-gateway",
+  "name": "onyx-m2-action-gateway",
   "version": "1.0.0",
   "type": "module",
   "description": "",
@@ -20,7 +20,9 @@
     "fastify-plugin": "^3.0.0",
     "fastify-autoload": "^3.3.1",
     "fastify-sensible": "^3.1.0",
-    "fastify-cli": "^2.9.1"
+    "fastify-cli": "^2.9.1",
+    "myq-api": "^2.0.4",
+    "teslajs": "^4.9.8"
   },
   "devDependencies": {
     "tap": "^14.11.0"
