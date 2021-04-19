@@ -20,9 +20,11 @@ responsibility for. Make sure you secure your server!
 ```
 
 ## Table of Contents
-#### [Installation](#Installation)
-#### [Deployment (Home Raspberry Pi)](#Deployment)
-#### [API](#API)
+[Installation](#Installation)
+
+[Deployment (Home Raspberry Pi)](#Deployment)
+
+[API](#API)
 
 # Installation
 
