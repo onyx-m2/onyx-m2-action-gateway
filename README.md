@@ -4,7 +4,9 @@ This project is a web server that proxies actions performed by the Onyx M2
 applications on the car and garage.
 
 ```diff
-! IMPORTANT: This cannot be installed on any of the cloud providers, as Tesla has blocked all IP ranges used by these operators. It does very well on a Raspberry Pi running at home though.
+! IMPORTANT: This cannot be installed on any of the cloud providers, as Tesla has
+! blocked all IP ranges used by these operators. It does very well on a Raspberry
+! Pi running at home though.
 ```
 
 ## Disclaimer
@@ -19,7 +21,7 @@ responsibility for. Make sure you secure your server!
 
 ## Table of Contents
 #### [Installation](#Installation)
-#### [Deployment (Home Raspberry Pi)](#Deployment (Home Raspberry Pi))
+#### [Deployment (Home Raspberry Pi)](#Deployment)
 #### [API](#API)
 
 # Installation
@@ -68,7 +70,7 @@ or in production mode with
 npm start
 ```
 
-# Deployment (Home Raspberry Pi)
+# Deployment
 
 As mentioned above, this gateway will not work on a cloud provider, and must be deployed
 in home to ensure the Tesla commands work. I suggest running this a Raspberry Pi. I
