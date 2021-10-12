@@ -8,11 +8,13 @@ export default {
   myQ: {
     username: process.env.MYQ_USERNAME,
     password: process.env.MYQ_PASSWORD,
-    device: process.env.MYQ_DEVICE
+    deviceId: process.env.MYQ_DEVICE
   },
   tesla: {
     username: process.env.TESLA_USERNAME,
     password: process.env.TESLA_PASSWORD,
+    accessToken: process.env.TESLA_ACCESS_TOKEN,
+    refreshToken: process.env.TESLA_REFRESH_TOKEN,
     id: process.env.TESLA_ID,
     vehicleId: process.env.TESLA_VEHICLE_ID
   }

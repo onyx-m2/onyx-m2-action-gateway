@@ -7,17 +7,15 @@ import {
 } from 'teslajs'
 import config from '../config.js'
 
-const MILLISECONDS_PER_WEEK = 604800000
+// NOTE: As of this writing, the login and refresh functionality is broken, see upstream
+// issue here: https://github.com/mseminatore/TeslaJS/issues/261
 
-var authToken = null
-var refreshToken = null
+// THEREFORE, any access token put in .env will only last 8 hours!!!
+
+const MILLISECONDS_PER_4_HOURS = 14400000
+
+var { accessToken, refreshToken } = config.tesla
 var vehicleID = config.tesla.vehicleId
-
-
-// once a week we'll force the refreshing of our token (it expires every 45 days)
-setInterval(() => {
-  authToken = null
-}, MILLISECONDS_PER_WEEK);
 
 export default async function (fastify, opts) {
   fastify.put('/car/vent_windows', ventWindows)
@@ -25,74 +23,82 @@ export default async function (fastify, opts) {
   fastify.put('/car/wake_up', wakeUp)
 
   // verify credentials and vehicle configuration
-  await refreshCredentials(fastify.log)
-  const vehicles = await teslaVehicles({ authToken })
-  if (!vehicleID) {
-    fastify.log.warn(`TESLA_VEHICLE_ID is not set, use one of the vehicles below:`)
-    for (const vehicle of vehicles) {
-      const { id, display_name: name, vin } = vehicle
-      fastify.log.info(`Id ${id} is ${name} with vin ${vin}`)
-    }
-  }
-  else {
-    const vehicle = vehicles.find(v => v.id == vehicleID)
-    if (vehicle) {
-      const { display_name: name, vin } = vehicle
-      fastify.log.info(`Selected tesla vehicle is ${name} with vin ${vin}`)
+  try {
+    //await refreshCredentials(fastify.log)
+    const vehicles = await teslaVehicles({ authToken: accessToken })
+    if (!vehicleID) {
+      fastify.log.warn(`TESLA_VEHICLE_ID is not set, use one of the vehicles below:`)
+      for (const vehicle of vehicles) {
+        const { id, display_name: name, vin } = vehicle
+        fastify.log.info(`Id ${id} is ${name} with vin ${vin}`)
+      }
     }
     else {
-      fastify.log.error(`No tesla vehicle with id ${vehicleID}`)
+      const vehicle = vehicles.find(v => v.id == vehicleID)
+      if (vehicle) {
+        const { display_name: name, vin } = vehicle
+        fastify.log.info(`Selected tesla vehicle is ${name} with vin ${vin}`)
+      }
+      else {
+        fastify.log.error(`No tesla vehicle with id ${vehicleID}`)
+      }
     }
+
+    // refresh token when needed (it expires every 8 hours as of Oct 2021)
+    setInterval(() => {
+      refreshCredentials(fastify.log)
+    }, MILLISECONDS_PER_4_HOURS);
+
+  }
+  catch (e) {
+    fastify.log.error(`Failed to initialize vehicles, car features disabled. (${e})`)
   }
 }
 
 async function ventWindows(request, reply) {
-  await teslaApi(request.log, () => teslaWindowControl({ authToken, vehicleID }, 'vent'))
-  reply.code(204)
+  await teslaApi(request.log, () => teslaWindowControl({ authToken: accessToken, vehicleID }, 'vent'))
+  return reply.code(204)
 }
 
 async function closeWindows(request, reply) {
-  await teslaApi(request.log, () => teslaWindowControl({ authToken, vehicleID }, 'close'))
+  await teslaApi(request.log, () => teslaWindowControl({ authToken: accessToken, vehicleID }, 'close'))
   reply.code(204)
 }
 
 async function wakeUp(request, reply) {
-  await teslaApi(request.log, () => teslaWakeUp({ authToken, vehicleID }))
+  await teslaApi(request.log, () => teslaWakeUp({ authToken: accessToken, vehicleID }))
   reply.code(204)
 }
 
 async function refreshCredentials(log) {
-  if (authToken === null) {
-    if (refreshToken !== null) {
-      try {
-        const { refreshToken: newRefreshToken, authToken: newAuthToken } = await teslaRefreshToken(refreshToken)
-        refreshToken = newRefreshToken
-        authToken = newAuthToken
-        log.info(`Successfully refreshed tesla auth token`)
-      }
-      catch (e) {
-        log.error(`Error refreshing tesla auth token, will try logging again. ${e}`)
-      }
+  if (refreshToken !== null) {
+    try {
+      const { response, refreshToken: newRefreshToken, authToken: newAccessToken } = await teslaRefreshToken(refreshToken)
+      refreshToken = newRefreshToken
+      accessToken = newAccessToken
+      log.info(`Successfully refreshed tesla auth token ${JSON.stringify(response)}`)
     }
-    else {
-      try {
-        const { username, password } = config.tesla
-        const { refreshToken: newRefreshToken, authToken: newAuthToken } = await teslaLogin(username, password)
-        authToken = newAuthToken
-        refreshToken = newRefreshToken
-        log.info(`Successfully obtained tesla auth token`)
-      }
-      catch (e) {
-        log.error(`Error logging into tesla account. ${e}`)
-        throw e
-      }
+    catch (e) {
+      log.error(`Error refreshing tesla auth token, will try logging again. ${e}`)
+    }
+  }
+  else {
+    try {
+      const { username, password } = config.tesla
+      const { refreshToken: newRefreshToken, authToken: newAccessToken } = await teslaLogin(username, password)
+      accessToken = newAccessToken
+      refreshToken = newRefreshToken
+      log.info(`Successfully obtained tesla auth token`)
+    }
+    catch (e) {
+      log.error(`Error logging into tesla account. ${e}`)
+      throw e
     }
   }
 }
 
 async function teslaApi(log, action) {
   try {
-    await refreshCredentials(log)
     return await action()
   }
   catch (e) {
